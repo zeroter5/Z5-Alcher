@@ -1,0 +1,91 @@
+import org.osbot.rs07.api.model.NPC;
+import org.osbot.rs07.api.ui.RS2Widget;
+import org.osbot.rs07.script.Script;
+import org.osbot.rs07.script.ScriptManifest;
+
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+
+@ScriptManifest(author = "zeroter5", info = "Turns any item you want into gold.", logo = "", name = "Z5-Alcher", version = 0)
+
+public class Alcher extends Script {
+	String itemName;
+	private JFrame gui;
+	private boolean started = false;
+	
+	private enum State {
+		ALCH,WAIT,BANK
+	}
+	private State getState() {
+		
+		
+		if (!myPlayer().isAnimating() && (inventory.contains(itemName) && inventory.contains("Nature Rune")))
+			return State.ALCH;
+		else if (myPlayer().isAnimating())
+			return State.WAIT; 
+		else if (inventory.isEmptyExcept("Nature rune","Coins"))
+			return State.BANK;
+		else
+			return null;
+				
+	}
+
+	public int onLoop() throws InterruptedException {//main body of program
+		
+			switch(getState()) {// set actions based on state
+			case ALCH: 
+				log("alch");
+				RS2Widget SpellIcon = getWidgets().get(548, 53);
+				RS2Widget AlchIcon = getWidgets().get(218, 35);
+
+					SpellIcon.interact("Magic");
+					sleep(random(300,500));
+					AlchIcon.interact("Cast");
+					sleep(random(300,500));
+					inventory.getItem(itemName).interact("Cast");
+					
+			break;
+			case WAIT:
+				
+				log("wait");
+				sleep(random(900,1200));
+				
+			break;
+			case BANK:
+				
+				log("banking");
+				NPC banker = npcs.closest("Banker");
+				if (!getBank().isOpen()){//If the bank is not open
+					log("opening bank");
+				    banker.interact("Bank");
+				   sleep(random(800,1000));
+				   log("withdrawing");
+					bank.getItem(itemName).interact("Withdraw-All");
+					sleep(random(500,900));
+					bank.close();
+				   
+				} else {//bank is open
+					
+					bank.getItem(itemName).interact("Withdraw-All");
+					sleep(random(1000,1500));
+					bank.close();
+				}
+			break;
+				}
+
+		return random(2000,2500);
+		}
+
+public void onStart() throws InterruptedException {
+    itemName = JOptionPane.showInputDialog("Enter Item Name (Case Sensitive)");
+    do{
+    	sleep(random(500,1000));
+    }while(itemName == null);
+	log("Z5-Alcher Started.");
+}
+public void onExit() {
+	log("Z5-Alcher Ended.");
+}
+
+}
+
